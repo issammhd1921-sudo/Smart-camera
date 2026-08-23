@@ -33,12 +33,18 @@ jobs:
             libtool \
             pkg-config
 
-    - name: Install Specific Buildozer Version
+    - name: Install Buildozer
       run: |
         pip install --upgrade pip
-        pip install cython==0.29.36
-        pip install buildozer==1.4.0
-        pip install python-for-android==2024.01.0
+        pip install cython==0.29.36 buildozer
+
+    - name: Accept All Android Licenses Automatically
+      run: |
+        mkdir -p ~/.android
+        echo "### License" > ~/.android/repositories.cfg
+        # الموافقة التلقائية على جميع رخص الـ SDK بما فيها الإصدار 37
+        yes | sdkmanager --licenses || true
+        sdkmanager "build-tools;37.0.0" "platforms;android-33" || true
 
     - name: Run Buildozer Debug
       run: |
