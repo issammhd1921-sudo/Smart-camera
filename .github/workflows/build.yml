@@ -38,13 +38,12 @@ jobs:
         pip install --upgrade pip
         pip install cython==0.29.36 buildozer
 
-    - name: Accept All Android Licenses Automatically
+    - name: Pre-create Android SDK License Directories
       run: |
-        mkdir -p ~/.android
-        echo "### License" > ~/.android/repositories.cfg
-        # الموافقة التلقائية على جميع رخص الـ SDK بما فيها الإصدار 37
-        yes | sdkmanager --licenses || true
-        sdkmanager "build-tools;37.0.0" "platforms;android-33" || true
+        mkdir -p /home/runner/.buildozer/android/platform/android-sdk/licenses
+        echo "24333f1a43566172ba57be40b8f67f408253d643" > /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+        echo "84831b9409646a918e30573bab4c9c91346d8abd" >> /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+        echo "d56f5187479451eabf01fb78af6dfcb131a648db" >> /home/runner/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
 
     - name: Run Buildozer Debug
       run: |
