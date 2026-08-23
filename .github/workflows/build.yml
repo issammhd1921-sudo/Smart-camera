@@ -14,9 +14,9 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.9'
 
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -31,23 +31,15 @@ jobs:
             unzip \
             autoconf \
             libtool \
-            pkg-config \
-            zlib1g
+            pkg-config
 
-    - name: Install Buildozer and Cython
+    - name: Install Stable Buildozer and p4a
       run: |
         pip install --upgrade pip
-        pip install cython==0.29.36 buildozer
+        pip install cython==0.29.33
+        pip install git+https://github.com/kivy/buildozer.git@master
 
-    - name: Force Accept Licenses and Install Build-Tools 33
-      run: |
-        mkdir -p ~/.android
-        echo "### License" > ~/.android/repositories.cfg
-        # تثبيت الـ SDK tools وإجبار قبول الرخص للإصدار 33 تفادياً للمشاكل
-        yes | sdkmanager --licenses || true
-        sdkmanager "build-tools;33.0.0" "platforms;android-33" || true
-
-    - name: Build APK with Buildozer
+    - name: Run Buildozer Debug
       run: |
         buildozer -v android debug
 
