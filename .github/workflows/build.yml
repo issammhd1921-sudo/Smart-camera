@@ -14,7 +14,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
+        python-version: '3.10'
 
     - name: Install system dependencies
       run: |
@@ -33,11 +33,10 @@ jobs:
             libtool \
             pkg-config
 
-    - name: Install Stable Buildozer and p4a
+    - name: Install Buildozer and Cython
       run: |
         pip install --upgrade pip
-        pip install cython==0.29.33
-        pip install git+https://github.com/kivy/buildozer.git@master
+        pip install cython==0.29.36 buildozer==1.5.0
 
     - name: Run Buildozer Debug
       run: |
