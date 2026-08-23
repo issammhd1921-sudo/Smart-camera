@@ -498,4 +498,8 @@ warn_on_root = 1
 #        buildozer --profile demo android debug
 #
 #   Environment variable overrides have priority over profile overrides.
+andro
 android.accept_sdk_license = True
+android.ant_path = 
+android.cmdline_tools_version = 11.0
+
