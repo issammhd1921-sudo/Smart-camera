@@ -39,11 +39,10 @@ jobs:
         pip install --upgrade pip
         pip install cython==0.29.36 buildozer
 
-    - name: Accept Android SDK licenses properly
+    - name: Clear old buildozer cache
       run: |
-        mkdir -p /home/runner/.android
-        echo "### License" > /home/runner/.android/repositories.cfg
-        yes | sdkmanager --licenses || true
+        rm -rf ~/.buildozer
+        rm -rf .buildozer
 
     - name: Build APK with Buildozer
       run: |
