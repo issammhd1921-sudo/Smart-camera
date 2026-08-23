@@ -117,7 +117,6 @@ android.minapi = 21
 # (str) Android build tools version to use
 android.build_tools_version = 33.0.0
 
-
 # (int) Android SDK version to use
 #android.sdk = 20
 
