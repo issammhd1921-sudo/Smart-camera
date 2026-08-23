@@ -39,10 +39,13 @@ jobs:
         pip install --upgrade pip
         pip install cython==0.29.36 buildozer
 
-    - name: Clear old buildozer cache
+    - name: Force Accept Licenses and Install Build-Tools 33
       run: |
-        rm -rf ~/.buildozer
-        rm -rf .buildozer
+        mkdir -p ~/.android
+        echo "### License" > ~/.android/repositories.cfg
+        # تثبيت الـ SDK tools وإجبار قبول الرخص للإصدار 33 تفادياً للمشاكل
+        yes | sdkmanager --licenses || true
+        sdkmanager "build-tools;33.0.0" "platforms;android-33" || true
 
     - name: Build APK with Buildozer
       run: |
