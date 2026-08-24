@@ -6,10 +6,24 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.camera import Camera
+from kivy.graphics import Rotate, PushMatrix, PopMatrix
 
 OUTPUT_DIR = "outputs"
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
+
+class RotatedCamera(Camera):
+    """ فئة فرعية لتصحيح اتجاه عرض الكاميرا برمجياً """
+    def __init__(self, **kwargs):
+        super(RotatedCamera, self).__init__(**kwargs)
+        with self.canvas.before:
+            PushMatrix()
+            # تدوير عرض الكاميرا بمقدار 270 درجة (أو 90 حسب استجابة هاتفك) لضبط الاتجاه
+            self.rot = Rotate(angle=270, origin=self.center)
+        self.bind(pos=self.update_canvas, size=self.update_canvas)
+
+    def update_canvas(self, *args):
+        self.rot.origin = self.center
 
 class SmartCameraRoot(BoxLayout):
     def __init__(self, **kwargs):
@@ -18,22 +32,20 @@ class SmartCameraRoot(BoxLayout):
         self.padding = 20
         self.spacing = 15
 
-        # عنوان التطبيق
         self.add_widget(Label(
             text="Smart Camera Pro",
             font_size='20sp',
             size_hint=(1, 0.1)
         ))
 
-        # تشغيل الكاميرا بالطريقة المستقرة البسيطة
+        # استخدام الكاميرا المعدلة بالاتجاه الجديد
         try:
-            self.cam = Camera(play=True, resolution=(-1, -1), size_hint=(1, 0.6))
+            self.cam = RotatedCamera(play=True, resolution=(-1, -1), size_hint=(1, 0.6))
             self.add_widget(self.cam)
         except Exception as e:
             self.add_widget(Label(text=f"Camera Error: {str(e)}", size_hint=(1, 0.6)))
             self.cam = None
 
-        # شاشة الحالة
         self.status_label = Label(
             text="Camera active. Ready to process frames.",
             font_size='14sp',
@@ -44,7 +56,6 @@ class SmartCameraRoot(BoxLayout):
         self.status_label.bind(size=self.status_label.setter('text_size'))
         self.add_widget(self.status_label)
 
-        # زر الالتقاط والمعالجة
         self.btn = Button(
             text="Capture & Process Frame",
             font_size='16sp',
@@ -59,13 +70,12 @@ class SmartCameraRoot(BoxLayout):
             return
 
         try:
-            # تصدير الصورة الملتقطة لمعالجتها
             temp_path = os.path.join(OUTPUT_DIR, "live_snapshot.png")
             self.cam.export_to_png(temp_path)
             
             start_time = time.time()
             
-            # معالجة مصفوفة NumPy مع تصحيح الاتجاه (دوران 90 درجة لإصلاح الصورة المقلوبة)
+            # معالجة مصفوفة NumPy
             dummy_frame = np.random.randint(0, 256, (480, 640, 3), dtype=np.uint8)
             processed_frame = np.rot90(dummy_frame, k=1)
             processed_frame = np.clip(processed_frame.astype(np.float32) * 1.1, 0, 255).astype(np.uint8)
@@ -86,4 +96,4 @@ class SmartCameraApp(App):
 
 if __name__ == "__main__":
     SmartCameraApp().run()
-    
+        
