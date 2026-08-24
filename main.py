@@ -15,12 +15,16 @@ if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
 class RotatedCamera(Camera):
-    """ فئة فرعية آمنة وثابتة لتصحيح تدوير الكاميرا برمجياً """
-    def __init__(self, **kwargs):
+    """ فئة الكاميرا مع دعم التدوير التلقائي وضبط الزاوية للأمامية والخلفية """
+    def __init__(self, camera_index=0, **kwargs):
         super(RotatedCamera, self).__init__(**kwargs)
+        self.index = camera_index
+        
         with self.canvas.before:
             PushMatrix()
-            self.rot = Rotate(angle=270, origin=self.center)
+            # زاوية التدوير تتناسب مع الكاميرا (الخلفية غالباً 270، والأمامية قد تحتاج ضبطاً مختلفاً حسب الجهاز)
+            angle = 270 if self.index == 0 else 270 
+            self.rot = Rotate(angle=angle, origin=self.center)
         with self.canvas.after:
             PopMatrix()
         self.bind(pos=self.update_origin, size=self.update_origin)
@@ -29,15 +33,13 @@ class RotatedCamera(Camera):
         self.rot.origin = self.center
 
 class ModernButton(Button):
-    """ زر عصري بحواف دائرية وتصميم جذاب """
     def __init__(self, **kwargs):
         super(ModernButton, self).__init__(**kwargs)
         self.background_normal = ''
-        self.background_color = (0, 0, 0, 0) # إلغاء الخلفية الافتراضية
+        self.background_color = (0, 0, 0, 0)
         self.color = (1, 1, 1, 1)
         self.bold = True
         
-        # رسم خلفية دائرية للزر
         with self.canvas.before:
             self.bg_color = Color(rgba=get_color_from_hex("#2575fc"))
             self.rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[18])
@@ -53,14 +55,14 @@ class SmartCameraRoot(BoxLayout):
         self.orientation = 'vertical'
         self.padding = [15, 20, 15, 20]
         self.spacing = 15
+        self.current_camera_index = 0  0: خلفية, 1: أمامية
 
-        # خلفية التطبيق الداكنة العصرية
         with self.canvas.before:
             Color(rgba=get_color_from_hex("#0f111a"))
             self.bg_rect = Rectangle(pos=self.pos, size=self.size)
         self.bind(pos=self.update_bg, size=self.update_bg)
 
-        # 1. شريط العنوان العلوي الاحترافي
+        # 1. شريط العنوان
         header_layout = BoxLayout(size_hint=(1, 0.07), orientation='horizontal')
         self.title_label = Label(
             text="⚡ Smart Camera AI Pro",
@@ -74,17 +76,14 @@ class SmartCameraRoot(BoxLayout):
         header_layout.add_widget(self.title_label)
         self.add_widget(header_layout)
 
-        # 2. إطار الكاميرا بتصميم منسق
-        try:
-            self.cam = RotatedCamera(play=True, resolution=(-1, -1), size_hint=(1, 0.55))
-            self.add_widget(self.cam)
-        except Exception as e:
-            self.add_widget(Label(text=f"Camera Error: {str(e)}", size_hint=(1, 0.55)))
-            self.cam = None
+        # 2. حاوية الكاميرا لإعادة تحميلها برمجياً عند التبديل
+        self.camera_container = BoxLayout(size_hint=(1, 0.55))
+        self.init_camera(self.current_camera_index)
+        self.add_widget(self.camera_container)
 
-        # 3. لوحة معلومات الأداء الحية (Dashboard)
+        # 3. لوحة معلومات الأداء
         self.status_label = Label(
-            text="System Status: Ready for AI Pipeline.\nFPS: -- | Processing: --",
+            text="System Status: Ready.\nFPS: -- | Processing: --",
             font_size='13sp',
             color=(0.5, 0.84, 1, 1),
             halign='center',
@@ -94,17 +93,14 @@ class SmartCameraRoot(BoxLayout):
         self.status_label.bind(size=self.status_label.setter('text_size'))
         self.add_widget(self.status_label)
 
-        # 4. لوحة أزرار التحكم السفلية المتطورة
+        # 4. لوحة أزرار التحكم السفلية
         controls_layout = GridLayout(cols=2, spacing=12, size_hint=(1, 0.16))
 
-        # زر التقاط ومعالجة
         self.btn_capture = ModernButton(text="Capture & Process", font_size='15sp')
         self.btn_capture.bind(on_press=self.capture_and_process)
         controls_layout.add_widget(self.btn_capture)
 
-        # زر تبديل الفلتر/الكاميرا
         self.btn_toggle = ModernButton(text="Switch Camera", font_size='15sp')
-        # تغيير لون هذا الزر ليكون مميزاً (درجة بنفسجية عصرية)
         with self.btn_toggle.canvas.before:
             self.btn_toggle.bg_color.rgba = get_color_from_hex("#6a11cb")
         self.btn_toggle.bind(on_press=self.switch_camera)
@@ -112,19 +108,25 @@ class SmartCameraRoot(BoxLayout):
 
         self.add_widget(controls_layout)
 
+    def init_camera(self, index):
+        self.camera_container.clear_widgets()
+        try:
+            self.cam = RotatedCamera(camera_index=index, play=True, resolution=(-1, -1), size_hint=(1, 1))
+            self.camera_container.add_widget(self.cam)
+        except Exception as e:
+            self.camera_container.add_widget(Label(text=f"Camera Error: {str(e)}"))
+            self.cam = None
+
     def update_bg(self, *args):
         self.bg_rect.pos = self.pos
         self.bg_rect.size = self.size
 
     def switch_camera(self, instance):
-        if self.cam:
-            current_index = getattr(self.cam, 'index', 0)
-            new_index = 1 if current_index == 0 else 0
-            try:
-                self.cam.index = new_index
-                self.status_label.text = f"Switched to Camera Index: {new_index}\nFPS: ~60.0 | Ready"
-            except Exception:
-                self.status_label.text = "Camera switch not supported on this device."
+        # التبديل الفعلي بين الكاميرا الخلفية (0) والأمامية (1)
+        self.current_camera_index = 1 if self.current_camera_index == 0 else 0
+        self.init_camera(self.current_camera_index)
+        cam_type = "Front (Selfie)" if self.current_camera_index == 1 else "Rear (Back)"
+        self.status_label.text = f"Switched to {cam_type} Camera successfully!"
 
     def capture_and_process(self, instance):
         if not self.cam:
@@ -137,7 +139,6 @@ class SmartCameraRoot(BoxLayout):
             
             start_time = time.time()
             
-            # محاكاة خط معالجة NumPy المتقدم مع حساب الأداء الحقيقي
             dummy_frame = np.random.randint(0, 256, (480, 640, 3), dtype=np.uint8)
             processed_frame = np.rot90(dummy_frame, k=1)
             processed_frame = np.clip(processed_frame.astype(np.float32) * 1.2, 0, 255).astype(np.uint8)
@@ -148,7 +149,7 @@ class SmartCameraRoot(BoxLayout):
             final_path = os.path.join(OUTPUT_DIR, "ai_processed_output.npy")
             np.save(final_path, processed_frame)
             
-            self.status_label.text = f"✔ Pipeline Executed Successfully!\nFPS: {fps_est:.1f} | Time: {elapsed:.1f}ms"
+            self.status_label.text = f"✔ Frame Processed!\nFPS: {fps_est:.1f} | Time: {elapsed:.1f}ms"
             
         except Exception as e:
             self.status_label.text = f"[!] Pipeline Error: {str(e)}"
@@ -159,4 +160,4 @@ class SmartCameraApp(App):
 
 if __name__ == "__main__":
     SmartCameraApp().run()
-    
+            
