@@ -2,6 +2,7 @@
 title = Real Camera App
 package.name = realcamera
 package.domain = org.real
+source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
 source.include_dir = .
 version = 0.1
